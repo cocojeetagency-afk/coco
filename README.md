@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🥥 Coconut Export Manager
 
-## Getting Started
+Order management dashboard for **JEET AGENCY, Salem** — built with Next.js, Neon Postgres, and Tailwind CSS. Mobile-first UI with login, monthly auto order numbering (IST), CSV export, and daily Telegram reminders.
 
-First, run the development server:
+## Features
+
+- **Orders** — month selector, summary counts (Total / Pending / Confirmed / Completed), search, inline status change, edit & delete.
+- **Add / Edit Order** — auto-generated order number that **resets to 1 every month** (IST). Changing the order date to another month automatically assigns the next number of that month.
+- **Reports** — download orders for any date range as CSV (opens in Excel).
+- **Telegram reminders** — daily at 9:00 AM IST, alerts for orders whose **Loading Date is tomorrow** (or passed) while Actual Loading Date / Confirmation Date is still empty.
+- **Login** — two users, configured via environment variables.
+
+## Local setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # then fill in the values
+node scripts/init-db.mjs     # creates the orders table (run once)
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Environment variables (`.env.local`)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL` | Neon Postgres connection string |
+| `AUTH_SECRET` | Long random string used to sign login sessions |
+| `APP_USER_1` / `APP_PASS_1` | First login |
+| `APP_USER_2` / `APP_PASS_2` | Second login |
+| `TELEGRAM_BOT_TOKEN` | Bot token from @BotFather |
+| `TELEGRAM_CHAT_ID` | Chat/group ID that receives reminders |
+| `CRON_SECRET` | Random string; Vercel Cron uses it to call the reminder API |
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Push this repo to GitHub.
+2. In [vercel.com](https://vercel.com) → **Add New → Project** → import the repo (framework auto-detected as Next.js).
+3. In **Settings → Environment Variables**, add every variable from the table above.
+4. Deploy. `vercel.json` already schedules the reminder cron: daily at `30 3 * * *` UTC = **9:00 AM IST**, calling `/api/cron/reminders`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Telegram bot setup
+
+1. In Telegram, open **@BotFather** → send `/newbot` → choose a name (e.g. *Coco Order Alerts*) and a username ending in `bot`. Copy the **token** → set as `TELEGRAM_BOT_TOKEN`.
+2. Create a Telegram **group** with the two staff members, and add the bot to the group.
+3. Send any message in the group, then open
+   `https://api.telegram.org/bot<TOKEN>/getUpdates`
+   in a browser and copy `chat.id` (group IDs are negative, e.g. `-100123456789`) → set as `TELEGRAM_CHAT_ID`.
+4. Add both values in Vercel env vars → redeploy → **Settings → Telegram Reminders → Send test message**.
+
+## Notes
+
+- Order dates are stored in UTC and always displayed in **IST (Asia/Kolkata)**.
+- Statuses: Pending, Confirmed, Loaded, Delivered, Cancelled.
+- The original client requirement document is in [docs/](docs/).
