@@ -3,14 +3,17 @@ import { sql } from "@/lib/db";
 import { createOrder } from "@/lib/actions";
 import { monthKeyIST, nowISTForInput } from "@/lib/dates";
 import OrderForm from "@/components/OrderForm";
+import { getPartyLists } from "@/lib/parties";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewOrderPage() {
   const month = monthKeyIST(new Date());
-  const rows = await sql`
-    SELECT COALESCE(MAX(order_number), 0) + 1 AS next
-    FROM orders WHERE month_key = ${month}`;
+  const [rows, parties] = await Promise.all([
+    sql`SELECT COALESCE(MAX(order_number), 0) + 1 AS next
+        FROM orders WHERE month_key = ${month}`,
+    getPartyLists(),
+  ]);
   const nextNumber = Number(rows[0].next);
 
   return (
@@ -30,12 +33,15 @@ export default async function NewOrderPage() {
         <OrderForm
           action={createOrder}
           initialNumber={nextNumber}
+          sellers={parties.sellers}
+          buyers={parties.buyers}
           initial={{
             order_date: nowISTForInput(),
             loading_date: "",
             seller: "",
+            seller_phone: "",
             buyer: "",
-            confirmation_date: "",
+            buyer_phone: "",
             actual_loading_date: "",
             rate: "",
             quantity: "",

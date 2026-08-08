@@ -4,6 +4,7 @@ import { sql, type Order } from "@/lib/db";
 import { updateOrder } from "@/lib/actions";
 import { dateToISTInput, toYMD } from "@/lib/dates";
 import OrderForm from "@/components/OrderForm";
+import { getPartyLists } from "@/lib/parties";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,11 @@ export default async function EditOrderPage({
   const orderId = Number(id);
   if (!Number.isInteger(orderId)) notFound();
 
-  const rows = (await sql`SELECT * FROM orders WHERE id = ${orderId}`) as Order[];
+  const [result, parties] = await Promise.all([
+    sql`SELECT * FROM orders WHERE id = ${orderId}`,
+    getPartyLists(),
+  ]);
+  const rows = result as Order[];
   if (rows.length === 0) notFound();
   const o = rows[0];
 
@@ -45,14 +50,17 @@ export default async function EditOrderPage({
         <OrderForm
           action={boundUpdate}
           initialNumber={o.order_number}
+          sellers={parties.sellers}
+          buyers={parties.buyers}
           initial={{
             id: o.id,
             order_number: o.order_number,
             order_date: dateToISTInput(o.order_date),
             loading_date: d(o.loading_date),
             seller: o.seller,
+            seller_phone: o.seller_phone ?? "",
             buyer: o.buyer,
-            confirmation_date: d(o.confirmation_date),
+            buyer_phone: o.buyer_phone ?? "",
             actual_loading_date: d(o.actual_loading_date),
             rate: String(Number(o.rate)),
             quantity: o.quantity === null ? "" : String(Number(o.quantity)),

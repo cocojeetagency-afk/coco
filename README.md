@@ -4,18 +4,20 @@ Order management dashboard for **JEET AGENCY, Salem** — built with Next.js, Ne
 
 ## Features
 
-- **Orders** — month selector, summary counts (Total / Pending / Confirmed / Completed), search, inline status change, edit & delete.
+- **Orders** — month selector, summary counts (Total / Pending / Loaded / Cancelled), search by name or phone, inline status change, edit & delete.
 - **Add / Edit Order** — auto-generated order number that **resets to 1 every month** (IST). Changing the order date to another month automatically assigns the next number of that month.
+- **Sellers & Buyers** — chosen from a saved contact list with phone numbers; new names typed into an order are added to the list automatically. Managed under Settings.
+- **Automatic dates** — setting an order's status to **Loaded** fills the Actual Loading Date with today's date (IST).
 - **Reports** — download orders for any date range as CSV (opens in Excel).
-- **Telegram reminders** — daily at 9:00 AM IST, alerts for orders whose **Loading Date is tomorrow** (or passed) while Actual Loading Date / Confirmation Date is still empty.
-- **Login** — two users, configured via environment variables.
+- **Telegram reminders** — daily at 9:00 AM IST, alerts for orders whose **Loading Date is tomorrow** (or passed) while the Actual Loading Date is still empty.
+- **Users** — logins are stored in the database with hashed passwords. Add users, change your own password, and reset another user's password under **Settings**.
 
 ## Local setup
 
 ```bash
 npm install
 cp .env.example .env.local   # then fill in the values
-node scripts/init-db.mjs     # creates the orders table (run once)
+node scripts/init-db.mjs     # creates/updates tables; safe to re-run
 npm run dev                  # http://localhost:3000
 ```
 
@@ -25,8 +27,8 @@ npm run dev                  # http://localhost:3000
 |---|---|
 | `DATABASE_URL` | Neon Postgres connection string |
 | `AUTH_SECRET` | Long random string used to sign login sessions |
-| `APP_USER_1` / `APP_PASS_1` | First login |
-| `APP_USER_2` / `APP_PASS_2` | Second login |
+| `APP_USER_1` / `APP_PASS_1` | First login — **only used to seed the users table on the very first `init-db` run**. After that, manage users in Settings. |
+| `APP_USER_2` / `APP_PASS_2` | Second login (same, seed only) |
 | `TELEGRAM_BOT_TOKEN` | Bot token from @BotFather |
 | `TELEGRAM_CHAT_ID` | Chat/group ID that receives reminders |
 | `CRON_SECRET` | Random string; Vercel Cron uses it to call the reminder API |
@@ -50,5 +52,6 @@ npm run dev                  # http://localhost:3000
 ## Notes
 
 - Order dates are stored in UTC and always displayed in **IST (Asia/Kolkata)**.
-- Statuses: Pending, Confirmed, Loaded, Delivered, Cancelled.
+- Statuses: Pending, Loaded, Cancelled.
+- Tables: `orders`, `parties` (sellers & buyers), `users`.
 - The original client requirement document is in [docs/](docs/).

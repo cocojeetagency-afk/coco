@@ -15,7 +15,7 @@ function addDays(ymd: string, days: number): string {
 /**
  * Daily reminder job (triggered by Vercel Cron).
  * Sends a Telegram alert for orders whose Loading Date is TOMORROW (or today /
- * overdue) while Actual Loading Date or Confirmation Date is still empty.
+ * overdue) while the Actual Loading Date is still empty.
  */
 export async function GET(req: NextRequest) {
   const auth = req.headers.get("authorization");
@@ -32,8 +32,8 @@ export async function GET(req: NextRequest) {
     SELECT * FROM orders
     WHERE loading_date IS NOT NULL
       AND loading_date <= ${tomorrow}
-      AND status NOT IN ('Cancelled', 'Delivered')
-      AND (actual_loading_date IS NULL OR confirmation_date IS NULL)
+      AND status NOT IN ('Cancelled', 'Loaded')
+      AND actual_loading_date IS NULL
     ORDER BY loading_date, month_key, order_number`) as Order[];
 
   if (pending.length === 0)
@@ -41,12 +41,6 @@ export async function GET(req: NextRequest) {
 
   const lines: string[] = ["🥥 <b>Coconut Export Manager — Reminders</b>", ""];
   for (const o of pending) {
-    const missing = [
-      o.actual_loading_date ? null : "Actual Loading Date",
-      o.confirmation_date ? null : "Confirmation Date",
-    ]
-      .filter(Boolean)
-      .join(" & ");
     const loadingYMD = toYMD(o.loading_date!);
     const when =
       loadingYMD === tomorrow
@@ -56,8 +50,9 @@ export async function GET(req: NextRequest) {
           : `⚠️ Loading date passed (${formatDate(o.loading_date!)})`;
     lines.push(
       `${when} — Order <b>#${o.order_number}</b> (${o.month_key})`,
-      `Seller: ${o.seller} → Buyer: ${o.buyer}`,
-      `Status: ${o.status} | Missing: <b>${missing}</b>`,
+      `Seller: ${o.seller}${o.seller_phone ? ` (${o.seller_phone})` : ""}`,
+      `Buyer: ${o.buyer}${o.buyer_phone ? ` (${o.buyer_phone})` : ""}`,
+      `Status: ${o.status} | Missing: <b>Actual Loading Date</b>`,
       ""
     );
   }

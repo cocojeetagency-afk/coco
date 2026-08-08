@@ -9,8 +9,9 @@ export type Order = {
   order_date: string | Date;
   loading_date: string | Date | null;
   seller: string;
+  seller_phone: string | null;
   buyer: string;
-  confirmation_date: string | Date | null;
+  buyer_phone: string | null;
   actual_loading_date: string | Date | null;
   rate: string;
   quantity: string | null;
@@ -18,6 +19,19 @@ export type Order = {
   remarks: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type Party = {
+  id: number;
+  name: string;
+  phone: string | null;
+  role: string; // 'seller' | 'buyer' | 'both'
+};
+
+export type User = {
+  id: number;
+  username: string;
+  created_at: string;
 };
 
 export { STATUSES } from "@/lib/statuses";

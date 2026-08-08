@@ -4,16 +4,6 @@ import { cookies } from "next/headers";
 const COOKIE = "coco_session";
 const secret = () => new TextEncoder().encode(process.env.AUTH_SECRET!);
 
-export function validUsers(): { username: string; password: string }[] {
-  const users = [];
-  for (const i of [1, 2]) {
-    const username = process.env[`APP_USER_${i}`];
-    const password = process.env[`APP_PASS_${i}`];
-    if (username && password) users.push({ username, password });
-  }
-  return users;
-}
-
 export async function createSession(username: string) {
   const token = await new SignJWT({ username })
     .setProtectedHeader({ alg: "HS256" })

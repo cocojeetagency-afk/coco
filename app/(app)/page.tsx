@@ -32,15 +32,17 @@ export default async function OrdersPage({
 
   const orders = (await (q
     ? sql`SELECT * FROM orders WHERE month_key = ${month}
-          AND (seller ILIKE ${"%" + q + "%"} OR buyer ILIKE ${"%" + q + "%"} OR remarks ILIKE ${"%" + q + "%"})
+          AND (seller ILIKE ${"%" + q + "%"} OR buyer ILIKE ${"%" + q + "%"}
+               OR seller_phone ILIKE ${"%" + q + "%"} OR buyer_phone ILIKE ${"%" + q + "%"}
+               OR remarks ILIKE ${"%" + q + "%"})
           ORDER BY order_number DESC`
     : sql`SELECT * FROM orders WHERE month_key = ${month} ORDER BY order_number DESC`)) as Order[];
 
-  const counts = { total: orders.length, Pending: 0, Confirmed: 0, done: 0 };
+  const counts = { total: orders.length, Pending: 0, Loaded: 0, Cancelled: 0 };
   for (const o of orders) {
     if (o.status === "Pending") counts.Pending++;
-    else if (o.status === "Confirmed") counts.Confirmed++;
-    else if (o.status === "Loaded" || o.status === "Delivered") counts.done++;
+    else if (o.status === "Loaded") counts.Loaded++;
+    else if (o.status === "Cancelled") counts.Cancelled++;
   }
 
   const months = monthOptions();
@@ -97,13 +99,13 @@ export default async function OrdersPage({
               <p className="text-[11px] text-amber-700">Pending</p>
               <p className="text-xl font-bold text-amber-600">{counts.Pending}</p>
             </div>
-            <div className="rounded-xl bg-blue-50 p-2">
-              <p className="text-[11px] text-blue-700">Confirmed</p>
-              <p className="text-xl font-bold text-blue-600">{counts.Confirmed}</p>
-            </div>
             <div className="rounded-xl bg-green-50 p-2">
-              <p className="text-[11px] text-green-700">Completed</p>
-              <p className="text-xl font-bold text-green-600">{counts.done}</p>
+              <p className="text-[11px] text-green-700">Loaded</p>
+              <p className="text-xl font-bold text-green-600">{counts.Loaded}</p>
+            </div>
+            <div className="rounded-xl bg-red-50 p-2">
+              <p className="text-[11px] text-red-700">Cancelled</p>
+              <p className="text-xl font-bold text-red-600">{counts.Cancelled}</p>
             </div>
           </div>
         </section>
@@ -114,7 +116,7 @@ export default async function OrdersPage({
           <input
             name="q"
             defaultValue={q}
-            placeholder="Search seller, buyer or remarks..."
+            placeholder="Search seller, buyer, phone or remarks..."
             className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base outline-none focus:border-green-600"
           />
           <button
@@ -175,12 +177,28 @@ export default async function OrdersPage({
                       Seller
                     </p>
                     <p className="font-medium text-slate-800">{o.seller}</p>
+                    {o.seller_phone && (
+                      <a
+                        href={`tel:${o.seller_phone}`}
+                        className="text-xs font-medium text-green-700 underline"
+                      >
+                        📞 {o.seller_phone}
+                      </a>
+                    )}
                   </div>
                   <div>
                     <p className="text-[11px] uppercase tracking-wide text-slate-400">
                       Buyer
                     </p>
                     <p className="font-medium text-slate-800">{o.buyer}</p>
+                    {o.buyer_phone && (
+                      <a
+                        href={`tel:${o.buyer_phone}`}
+                        className="text-xs font-medium text-green-700 underline"
+                      >
+                        📞 {o.buyer_phone}
+                      </a>
+                    )}
                   </div>
                   <div>
                     <p className="text-[11px] uppercase tracking-wide text-slate-400">

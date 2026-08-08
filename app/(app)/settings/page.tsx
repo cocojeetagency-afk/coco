@@ -1,13 +1,22 @@
 import { getSession } from "@/lib/auth";
 import { logout } from "@/lib/actions";
+import { sql, type User } from "@/lib/db";
+import { getPartyLists } from "@/lib/parties";
 import { telegramConfigured } from "@/lib/telegram";
 import TelegramTest from "@/components/TelegramTest";
+import UserManager from "@/components/UserManager";
+import PartyManager from "@/components/PartyManager";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
   const session = await getSession();
   const tgReady = telegramConfigured();
+  const [userRows, parties] = await Promise.all([
+    sql`SELECT id, username, created_at FROM users ORDER BY lower(username)`,
+    getPartyLists(),
+  ]);
+  const users = userRows as User[];
 
   return (
     <>
@@ -37,6 +46,22 @@ export default async function SettingsPage() {
         </section>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h2 className="mb-3 font-bold text-green-800">🔐 Users & Passwords</h2>
+          <UserManager users={users} currentUser={session?.username ?? ""} />
+        </section>
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h2 className="mb-1 font-bold text-green-800">
+            📇 Sellers & Buyers ({parties.all.length})
+          </h2>
+          <p className="mb-3 text-sm text-slate-500">
+            These names appear in the dropdowns on the order form, along with
+            their phone numbers.
+          </p>
+          <PartyManager parties={parties.all} />
+        </section>
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <h2 className="mb-2 font-bold text-green-800">
             🔔 Telegram Reminders
           </h2>
@@ -52,7 +77,7 @@ export default async function SettingsPage() {
           <p className="text-sm text-slate-600">
             Every day at <b>9:00 AM IST</b>, a Telegram alert is sent for orders
             whose <b>Loading Date is tomorrow</b> (or already passed) while the{" "}
-            <b>Actual Loading Date / Confirmation Date</b> is still empty.
+            <b>Actual Loading Date</b> is still empty.
           </p>
           {tgReady ? (
             <TelegramTest />
@@ -65,7 +90,7 @@ export default async function SettingsPage() {
           )}
         </section>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm text-sm text-slate-500">
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500 shadow-sm">
           <h2 className="mb-1 font-bold text-green-800">ℹ️ About</h2>
           <p>Coconut Export Manager — JEET AGENCY, Salem.</p>
           <p>Order numbers reset to 1 at the start of every month (IST).</p>

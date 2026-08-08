@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { STATUSES } from "@/lib/statuses";
 import type { OrderFormState } from "@/lib/actions";
 import { deleteOrder } from "@/lib/actions";
+import type { Party } from "@/lib/db";
+import PartySelect from "@/components/PartySelect";
+import { todayIST } from "@/lib/dates";
 
 export type OrderFormValues = {
   id?: number;
@@ -12,8 +15,9 @@ export type OrderFormValues = {
   order_date: string; // datetime-local value in IST
   loading_date: string;
   seller: string;
+  seller_phone: string;
   buyer: string;
-  confirmation_date: string;
+  buyer_phone: string;
   actual_loading_date: string;
   rate: string;
   quantity: string;
@@ -41,15 +45,21 @@ export default function OrderForm({
   initial,
   action,
   initialNumber,
+  sellers,
+  buyers,
 }: {
   initial: OrderFormValues;
   action: (prev: OrderFormState, formData: FormData) => Promise<OrderFormState>;
   initialNumber: number;
+  sellers: Party[];
+  buyers: Party[];
 }) {
   const [state, formAction, pending] = useActionState(action, undefined);
   const [orderDate, setOrderDate] = useState(initial.order_date);
-  const [previewNumber, setPreviewNumber] = useState<number | null>(
-    initialNumber
+  const [status, setStatus] = useState(initial.status);
+  const [actualLoading, setActualLoading] = useState(initial.actual_loading_date);
+  const [numbersByMonth, setNumbersByMonth] = useState<Record<string, number>>(
+    {}
   );
   const [deleting, startDelete] = useTransition();
   const router = useRouter();
@@ -58,25 +68,27 @@ export default function OrderForm({
   const initialMonth = monthKeyOf(initial.order_date);
   const isEdit = initial.id !== undefined;
 
+  // Same month as loaded: keep the existing (edit) or server-computed (new) number.
+  // Another month: show the next free number of that month, fetched on demand.
+  const previewNumber =
+    monthKey === initialMonth ? initialNumber : (numbersByMonth[monthKey] ?? null);
+
   useEffect(() => {
-    // Same month as loaded: for edits keep the existing number; for new, keep server-computed
-    if (monthKey === initialMonth) {
-      setPreviewNumber(initialNumber);
+    if (monthKey === initialMonth || numbersByMonth[monthKey] !== undefined)
       return;
-    }
     let cancelled = false;
-    setPreviewNumber(null);
     const url = `/api/next-number?month=${monthKey}${isEdit ? `&exclude=${initial.id}` : ""}`;
     fetch(url)
       .then((r) => r.json())
       .then((d) => {
-        if (!cancelled && typeof d.next === "number") setPreviewNumber(d.next);
+        if (!cancelled && typeof d.next === "number")
+          setNumbersByMonth((prev) => ({ ...prev, [monthKey]: d.next }));
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, [monthKey, initialMonth, initialNumber, isEdit, initial.id]);
+  }, [monthKey, initialMonth, isEdit, initial.id, numbersByMonth]);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -127,65 +139,26 @@ export default function OrderForm({
           className={input}
         />
         <p className="mt-1 text-xs text-slate-400">
-          Telegram reminder is sent 1 day before this date if actual loading /
-          confirmation is still empty.
+          A Telegram reminder is sent 1 day before this date if the Actual
+          Loading Date is still empty.
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div>
-          <label htmlFor="seller" className={label}>
-            Seller <span className="text-red-600">*</span>
-          </label>
-          <input
-            id="seller"
-            name="seller"
-            required
-            defaultValue={initial.seller}
-            placeholder="Enter seller name"
-            className={input}
-          />
-        </div>
-        <div>
-          <label htmlFor="buyer" className={label}>
-            Buyer <span className="text-red-600">*</span>
-          </label>
-          <input
-            id="buyer"
-            name="buyer"
-            required
-            defaultValue={initial.buyer}
-            placeholder="Enter buyer name"
-            className={input}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div>
-          <label htmlFor="confirmation_date" className={label}>
-            Confirmation Date
-          </label>
-          <input
-            id="confirmation_date"
-            type="date"
-            name="confirmation_date"
-            defaultValue={initial.confirmation_date}
-            className={input}
-          />
-        </div>
-        <div>
-          <label htmlFor="actual_loading_date" className={label}>
-            Actual Loading Date
-          </label>
-          <input
-            id="actual_loading_date"
-            type="date"
-            name="actual_loading_date"
-            defaultValue={initial.actual_loading_date}
-            className={input}
-          />
-        </div>
+        <PartySelect
+          title="Seller"
+          field="seller"
+          options={sellers}
+          defaultName={initial.seller}
+          defaultPhone={initial.seller_phone}
+        />
+        <PartySelect
+          title="Buyer"
+          field="buyer"
+          options={buyers}
+          defaultName={initial.buyer}
+          defaultPhone={initial.buyer_phone}
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -231,7 +204,13 @@ export default function OrderForm({
         <select
           id="status"
           name="status"
-          defaultValue={initial.status}
+          value={status}
+          onChange={(e) => {
+            const v = e.target.value;
+            setStatus(v);
+            // Marking an order Loaded stamps today's date automatically
+            if (v === "Loaded" && !actualLoading) setActualLoading(todayIST());
+          }}
           className={input}
         >
           {STATUSES.map((s) => (
@@ -240,6 +219,24 @@ export default function OrderForm({
             </option>
           ))}
         </select>
+      </div>
+
+      <div>
+        <label htmlFor="actual_loading_date" className={label}>
+          Actual Loading Date
+        </label>
+        <input
+          id="actual_loading_date"
+          type="date"
+          name="actual_loading_date"
+          value={actualLoading}
+          onChange={(e) => setActualLoading(e.target.value)}
+          className={input}
+        />
+        <p className="mt-1 text-xs text-slate-400">
+          Filled in automatically with today&apos;s date when you set the status
+          to <b>Loaded</b>. You can still change it.
+        </p>
       </div>
 
       <div>
