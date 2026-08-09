@@ -1,12 +1,16 @@
+// Env values pasted into a dashboard often pick up stray spaces or newlines,
+// which Telegram rejects with a confusing "chat not found".
+const env = (name: string) => process.env[name]?.trim() || "";
+
 export function telegramConfigured(): boolean {
-  return Boolean(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID);
+  return Boolean(env("TELEGRAM_BOT_TOKEN") && env("TELEGRAM_CHAT_ID"));
 }
 
 export async function sendTelegram(
   text: string
 ): Promise<{ ok: boolean; error?: string }> {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
+  const token = env("TELEGRAM_BOT_TOKEN");
+  const chatId = env("TELEGRAM_CHAT_ID");
   if (!token || !chatId)
     return {
       ok: false,
@@ -20,7 +24,13 @@ export async function sendTelegram(
       body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML" }),
     });
     const data = await res.json();
-    if (!data.ok) return { ok: false, error: data.description ?? "Telegram error" };
+    if (!data.ok) {
+      const hint =
+        data.description === "Bad Request: chat not found"
+          ? ` — check TELEGRAM_CHAT_ID (currently "${chatId}"); group IDs start with a minus sign`
+          : "";
+      return { ok: false, error: `${data.description ?? "Telegram error"}${hint}` };
+    }
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Network error" };
