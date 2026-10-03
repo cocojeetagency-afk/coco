@@ -60,8 +60,8 @@ export async function GET(req: NextRequest) {
         o.buyer,
         o.buyer_phone,
         fmtDMY(o.actual_loading_date),
-        Number(o.rate).toFixed(2),
-        o.quantity === null ? "" : Number(o.quantity),
+        o.rate,
+        o.quantity,
         o.status,
         o.remarks,
       ]

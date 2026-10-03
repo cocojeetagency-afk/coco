@@ -4,7 +4,9 @@ Order management dashboard for **JEET AGENCY, Salem** — built with Next.js, Ne
 
 ## Features
 
-- **Orders** — month selector, summary counts (Total / Pending / Loaded / Cancelled), search by name or phone, inline status change, edit & delete.
+- **Orders** — month selector, status filter with counts (All / Pending / Loaded / Cancelled), search by name or phone, inline status change, edit & delete.
+- **Rate & Quantity** — free text, so entries like `200 bags` or `25000 per ton` are fine.
+- **Seller & Buyer totals** — Reports shows each seller's and buyer's order count and total quantity for a month or a whole year (quantities are added per unit; cancelled orders are left out).
 - **Add / Edit Order** — auto-generated order number that **resets to 1 every month** (IST). Changing the order date to another month automatically assigns the next number of that month.
 - **Sellers & Buyers** — chosen from a saved contact list with phone numbers; new names typed into an order are added to the list automatically. Managed under Settings.
 - **Automatic dates** — setting an order's status to **Loaded** fills the Actual Loading Date with today's date (IST).

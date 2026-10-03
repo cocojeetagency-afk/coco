@@ -62,8 +62,8 @@ export default async function EditOrderPage({
             buyer: o.buyer,
             buyer_phone: o.buyer_phone ?? "",
             actual_loading_date: d(o.actual_loading_date),
-            rate: String(Number(o.rate)),
-            quantity: o.quantity === null ? "" : String(Number(o.quantity)),
+            rate: o.rate,
+            quantity: o.quantity ?? "",
             status: o.status,
             remarks: o.remarks ?? "",
           }}

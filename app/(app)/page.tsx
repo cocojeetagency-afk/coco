@@ -8,20 +8,27 @@ import {
   monthOptions,
 } from "@/lib/dates";
 import StatusSelect from "@/components/StatusSelect";
+import { fmtRate } from "@/lib/qty";
+import { STATUSES } from "@/lib/statuses";
 
 export const dynamic = "force-dynamic";
 
-function fmtRate(v: string) {
-  return `₹${Number(v).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
-}
-function fmtQty(v: string | null) {
-  return v === null ? "—" : `${Number(v).toLocaleString("en-IN")} MT`;
-}
+const FILTER_STYLES: Record<string, { tile: string; label: string; count: string }> = {
+  All: { tile: "bg-slate-50 ring-slate-500", label: "text-slate-500", count: "text-slate-800" },
+  Pending: { tile: "bg-orange-50 ring-orange-500", label: "text-orange-700", count: "text-orange-600" },
+  Loaded: { tile: "bg-green-50 ring-green-600", label: "text-green-700", count: "text-green-600" },
+  Cancelled: { tile: "bg-red-50 ring-red-500", label: "text-red-700", count: "text-red-600" },
+};
 
 export default async function OrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string; q?: string; saved?: string }>;
+  searchParams: Promise<{
+    month?: string;
+    q?: string;
+    status?: string;
+    saved?: string;
+  }>;
 }) {
   const params = await searchParams;
   const month =
@@ -29,8 +36,11 @@ export default async function OrdersPage({
       ? params.month
       : monthKeyIST(new Date());
   const q = (params.q ?? "").trim();
+  const status = (STATUSES as readonly string[]).includes(params.status ?? "")
+    ? params.status!
+    : "All";
 
-  const orders = (await (q
+  const monthOrders = (await (q
     ? sql`SELECT * FROM orders WHERE month_key = ${month}
           AND (seller ILIKE ${"%" + q + "%"} OR buyer ILIKE ${"%" + q + "%"}
                OR seller_phone ILIKE ${"%" + q + "%"} OR buyer_phone ILIKE ${"%" + q + "%"}
@@ -38,12 +48,23 @@ export default async function OrdersPage({
           ORDER BY order_number DESC`
     : sql`SELECT * FROM orders WHERE month_key = ${month} ORDER BY order_number DESC`)) as Order[];
 
-  const counts = { total: orders.length, Pending: 0, Loaded: 0, Cancelled: 0 };
-  for (const o of orders) {
-    if (o.status === "Pending") counts.Pending++;
-    else if (o.status === "Loaded") counts.Loaded++;
-    else if (o.status === "Cancelled") counts.Cancelled++;
-  }
+  const counts: Record<string, number> = {
+    All: monthOrders.length,
+    Pending: 0,
+    Loaded: 0,
+    Cancelled: 0,
+  };
+  for (const o of monthOrders) if (o.status in counts) counts[o.status]++;
+
+  const orders =
+    status === "All" ? monthOrders : monthOrders.filter((o) => o.status === status);
+
+  const filterHref = (s: string) => {
+    const sp = new URLSearchParams({ month });
+    if (q) sp.set("q", q);
+    if (s !== "All") sp.set("status", s);
+    return `/?${sp}`;
+  };
 
   const months = monthOptions();
   if (!months.includes(month)) months.push(month);
@@ -67,6 +88,9 @@ export default async function OrdersPage({
         {/* Month + summary */}
         <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <form method="GET" className="flex items-center gap-2">
+            {status !== "All" && (
+              <input type="hidden" name="status" value={status} />
+            )}
             <label htmlFor="month" className="text-sm font-medium text-slate-600">
               Month
             </label>
@@ -90,29 +114,37 @@ export default async function OrdersPage({
             </button>
           </form>
 
-          <div className="mt-4 grid grid-cols-4 gap-2 text-center">
-            <div className="rounded-xl bg-slate-50 p-2">
-              <p className="text-[11px] text-slate-500">Total</p>
-              <p className="text-xl font-bold text-slate-800">{counts.total}</p>
-            </div>
-            <div className="rounded-xl bg-amber-50 p-2">
-              <p className="text-[11px] text-amber-700">Pending</p>
-              <p className="text-xl font-bold text-amber-600">{counts.Pending}</p>
-            </div>
-            <div className="rounded-xl bg-green-50 p-2">
-              <p className="text-[11px] text-green-700">Loaded</p>
-              <p className="text-xl font-bold text-green-600">{counts.Loaded}</p>
-            </div>
-            <div className="rounded-xl bg-red-50 p-2">
-              <p className="text-[11px] text-red-700">Cancelled</p>
-              <p className="text-xl font-bold text-red-600">{counts.Cancelled}</p>
-            </div>
+          <p className="mt-4 mb-1.5 text-xs font-medium text-slate-500">
+            Filter by status
+          </p>
+          <div className="grid grid-cols-4 gap-2 text-center">
+            {["All", ...STATUSES].map((s) => {
+              const style = FILTER_STYLES[s];
+              return (
+                <Link
+                  key={s}
+                  href={filterHref(s)}
+                  aria-current={status === s ? "true" : undefined}
+                  className={`rounded-xl p-2 ${style.tile} ${
+                    status === s ? "ring-2" : "ring-0"
+                  }`}
+                >
+                  <p className={`text-[11px] ${style.label}`}>{s}</p>
+                  <p className={`text-xl font-bold ${style.count}`}>
+                    {counts[s]}
+                  </p>
+                </Link>
+              );
+            })}
           </div>
         </section>
 
         {/* Search */}
         <form method="GET" className="mt-3 flex gap-2">
           <input type="hidden" name="month" value={month} />
+          {status !== "All" && (
+            <input type="hidden" name="status" value={status} />
+          )}
           <input
             name="q"
             defaultValue={q}
@@ -129,14 +161,18 @@ export default async function OrdersPage({
 
         <h2 className="mt-5 mb-2 flex items-center justify-between text-base font-bold text-slate-800">
           <span>
-            Orders — {monthLabel(month)} ({orders.length})
+            {status === "All" ? "Orders" : `${status} orders`} —{" "}
+            {monthLabel(month)} ({orders.length})
           </span>
         </h2>
 
         {orders.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
             <p className="text-3xl">📦</p>
-            <p className="mt-2 font-medium">No orders in {monthLabel(month)}</p>
+            <p className="mt-2 font-medium">
+              No {status === "All" ? "" : `${status.toLowerCase()} `}orders in{" "}
+              {monthLabel(month)}
+            </p>
             <Link
               href="/orders/new"
               className="mt-3 inline-block rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white"
@@ -213,7 +249,7 @@ export default async function OrdersPage({
                       Quantity
                     </p>
                     <p className="font-medium text-slate-800">
-                      {fmtQty(o.quantity)}
+                      {o.quantity || "—"}
                     </p>
                   </div>
                   <div>

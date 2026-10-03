@@ -32,8 +32,8 @@ await sql`
     buyer               TEXT NOT NULL,
     confirmation_date   DATE,
     actual_loading_date DATE,
-    rate                NUMERIC(12,2) NOT NULL,
-    quantity            NUMERIC(12,3),
+    rate                TEXT NOT NULL,
+    quantity            TEXT,
     status              TEXT NOT NULL DEFAULT 'Pending',
     remarks             TEXT,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -54,6 +54,19 @@ await sql`ALTER TABLE orders DROP COLUMN IF EXISTS confirmation_date`;
 await sql`UPDATE orders SET status = 'Pending'   WHERE status IN ('Confirmed')`;
 await sql`UPDATE orders SET status = 'Loaded'    WHERE status IN ('Delivered', 'Completed')`;
 
+// Rate and Quantity are free text ("200 bags", "25000 per ton"). Older numeric
+// quantities were entered in MT, so keep that unit when converting.
+const numericCols = (
+  await sql`SELECT column_name FROM information_schema.columns
+            WHERE table_schema = current_schema() AND table_name = 'orders'
+              AND column_name IN ('rate', 'quantity') AND data_type = 'numeric'`
+).map((r) => r.column_name);
+if (numericCols.includes("rate"))
+  await sql`ALTER TABLE orders ALTER COLUMN rate TYPE TEXT USING trim_scale(rate)::text`;
+if (numericCols.includes("quantity"))
+  await sql`ALTER TABLE orders ALTER COLUMN quantity TYPE TEXT
+            USING trim_scale(quantity)::text || ' MT'`;
+
 // ---------- contacts (sellers & buyers) ----------
 await sql`
   CREATE TABLE IF NOT EXISTS parties (
@@ -65,17 +78,20 @@ await sql`
   )`;
 await sql`CREATE UNIQUE INDEX IF NOT EXISTS idx_parties_name ON parties (lower(name))`;
 
-// Seed contacts from names already used in orders
-await sql`
-  INSERT INTO parties (name, role)
-  SELECT DISTINCT seller, 'seller' FROM orders
-  WHERE seller <> '' AND lower(seller) NOT IN (SELECT lower(name) FROM parties)
-  ON CONFLICT DO NOTHING`;
-await sql`
-  INSERT INTO parties (name, role)
-  SELECT DISTINCT buyer, 'buyer' FROM orders
-  WHERE buyer <> '' AND lower(buyer) NOT IN (SELECT lower(name) FROM parties)
-  ON CONFLICT DO NOTHING`;
+// Seed contacts from names already used in orders — first run only, so a
+// re-run never brings back contacts that were removed or renamed in Settings
+const [{ count: partyCount }] = await sql`SELECT count(*)::int AS count FROM parties`;
+if (partyCount === 0) {
+  await sql`
+    INSERT INTO parties (name, role)
+    SELECT DISTINCT seller, 'seller' FROM orders WHERE seller <> ''
+    ON CONFLICT DO NOTHING`;
+  await sql`
+    INSERT INTO parties (name, role)
+    SELECT DISTINCT buyer, 'buyer' FROM orders
+    WHERE buyer <> '' AND lower(buyer) NOT IN (SELECT lower(name) FROM parties)
+    ON CONFLICT DO NOTHING`;
+}
 
 // ---------- users ----------
 await sql`

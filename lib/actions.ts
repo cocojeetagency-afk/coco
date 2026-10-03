@@ -171,10 +171,7 @@ function parseOrderForm(formData: FormData) {
   if (!orderDateRaw) throw new Error("Order Date is required");
   if (!seller) throw new Error("Seller is required");
   if (!buyer) throw new Error("Buyer is required");
-  if (!rate || isNaN(Number(rate)) || Number(rate) <= 0)
-    throw new Error("Enter a valid Rate");
-  if (quantityRaw && (isNaN(Number(quantityRaw)) || Number(quantityRaw) <= 0))
-    throw new Error("Enter a valid Quantity");
+  if (!rate) throw new Error("Rate is required");
   if (!(STATUSES as readonly string[]).includes(status))
     throw new Error("Invalid status");
 
@@ -192,8 +189,8 @@ function parseOrderForm(formData: FormData) {
     sellerPhone,
     buyer,
     buyerPhone,
-    rate: Number(rate),
-    quantity: quantityRaw === "" ? null : Number(quantityRaw),
+    rate,
+    quantity: quantityRaw === "" ? null : quantityRaw,
     status,
     remarks: remarks === "" ? null : remarks,
   };

@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { STATUSES } from "@/lib/statuses";
+import { STATUSES, STATUS_STYLES } from "@/lib/statuses";
 import type { OrderFormState } from "@/lib/actions";
 import { deleteOrder } from "@/lib/actions";
 import type { Party } from "@/lib/db";
@@ -169,10 +169,8 @@ export default function OrderForm({
           <input
             id="rate"
             name="rate"
-            type="number"
-            step="0.01"
-            min="0.01"
-            inputMode="decimal"
+            type="text"
+            autoComplete="off"
             required
             defaultValue={initial.rate}
             placeholder="Enter rate"
@@ -181,17 +179,15 @@ export default function OrderForm({
         </div>
         <div>
           <label htmlFor="quantity" className={label}>
-            Quantity (MT)
+            Quantity
           </label>
           <input
             id="quantity"
             name="quantity"
-            type="number"
-            step="0.001"
-            min="0.001"
-            inputMode="decimal"
+            type="text"
+            autoComplete="off"
             defaultValue={initial.quantity}
-            placeholder="Optional"
+            placeholder="e.g. 200 bags"
             className={input}
           />
         </div>
@@ -211,7 +207,7 @@ export default function OrderForm({
             // Marking an order Loaded stamps today's date automatically
             if (v === "Loaded" && !actualLoading) setActualLoading(todayIST());
           }}
-          className={input}
+          className={`${input} font-semibold ${STATUS_STYLES[status] ?? ""}`}
         >
           {STATUSES.map((s) => (
             <option key={s} value={s}>
