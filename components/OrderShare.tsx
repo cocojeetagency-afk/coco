@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { renderOrderImage, type ShareOrder } from "@/lib/orderImage";
+import {
+  orderSummaryText,
+  renderOrderImage,
+  type ShareOrder,
+} from "@/lib/orderImage";
 
 const button =
   "rounded-lg border border-green-700 px-2.5 py-1.5 text-sm font-semibold text-green-700 active:bg-green-50 disabled:opacity-50";
@@ -32,7 +36,11 @@ export default function OrderShare({ order }: { order: ShareOrder }) {
       // The phone's own share sheet (WhatsApp, Telegram, Gmail…). Browsers
       // that can't share files get the image as a download instead.
       if (mode === "share" && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: `Order #${order.number}` });
+        await navigator.share({
+          files: [file],
+          title: `Order #${order.number}`,
+          text: orderSummaryText(order),
+        });
       } else {
         save(blob, filename);
       }

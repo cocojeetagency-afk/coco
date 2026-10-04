@@ -16,6 +16,37 @@ export type ShareOrder = {
   remarks: string | null;
 };
 
+/** Rate is free text; plain numbers are shown as rupees. */
+function rateText(rate: string): string {
+  return /^\d+(\.\d+)?$/.test(rate.trim())
+    ? `₹${Number(rate).toLocaleString("en-IN")}`
+    : rate;
+}
+
+/** The order as plain text — sent along with the image as its caption. */
+export function orderSummaryText(o: ShareOrder): string {
+  const lines = [
+    `🥥 ORDER SUMMARY #${o.number}`,
+    `Date: ${o.date}`,
+    `Status: ${o.status}`,
+    "",
+    `Seller: ${o.seller}`,
+    o.sellerPhone ? `Seller Phone: ${o.sellerPhone}` : null,
+    `Buyer: ${o.buyer}`,
+    o.buyerPhone ? `Buyer Phone: ${o.buyerPhone}` : null,
+    "",
+    `Rate: ${rateText(o.rate)}`,
+    o.quantity ? `Quantity: ${o.quantity}` : null,
+    o.details ? `Order Details: ${o.details}` : null,
+    o.loadingDate ? `Loading Date: ${o.loadingDate}` : null,
+    o.actualLoadingDate ? `Actual Loading: ${o.actualLoadingDate}` : null,
+    o.remarks ? `Remarks: ${o.remarks}` : null,
+    "",
+    "JEET AGENCY, Salem",
+  ];
+  return lines.filter((l) => l !== null).join("\n");
+}
+
 const W = 1080;
 const M = 40; // page margin around the card
 const PAD = 44; // padding inside the card
@@ -189,9 +220,7 @@ function paint(ctx: Ctx, o: ShareOrder, cardH: number): number {
   y += 34;
 
   // Rate and quantity band
-  const rate = /^\d+(\.\d+)?$/.test(o.rate.trim())
-    ? `₹${Number(o.rate).toLocaleString("en-IN")}`
-    : o.rate;
+  const rate = rateText(o.rate);
   const qty = o.quantity || "—";
   const bandH =
     Math.max(fieldHeight(ctx, rate, colW, 42), fieldHeight(ctx, qty, colW, 42)) + 52;
