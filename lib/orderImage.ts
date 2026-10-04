@@ -16,6 +16,10 @@ export type ShareOrder = {
   remarks: string | null;
 };
 
+// Shown at the top and bottom of the shared image and its text
+const AGENCY = "Bharath Agency, Salem.";
+const SIGN_OFF = "Thanks, Bharath.";
+
 /** Rate is free text; plain numbers are shown as rupees. */
 function rateText(rate: string): string {
   return /^\d+(\.\d+)?$/.test(rate.trim())
@@ -26,6 +30,7 @@ function rateText(rate: string): string {
 /** The order as plain text — sent along with the image as its caption. */
 export function orderSummaryText(o: ShareOrder): string {
   const lines = [
+    AGENCY,
     `🥥 ORDER SUMMARY #${o.number}`,
     `Date: ${o.date}`,
     `Status: ${o.status}`,
@@ -42,7 +47,7 @@ export function orderSummaryText(o: ShareOrder): string {
     o.actualLoadingDate ? `Actual Loading: ${o.actualLoadingDate}` : null,
     o.remarks ? `Remarks: ${o.remarks}` : null,
     "",
-    "JEET AGENCY, Salem",
+    SIGN_OFF,
   ];
   return lines.filter((l) => l !== null).join("\n");
 }
@@ -50,7 +55,7 @@ export function orderSummaryText(o: ShareOrder): string {
 const W = 1080;
 const M = 40; // page margin around the card
 const PAD = 44; // padding inside the card
-const HEADER_H = 124;
+const HEADER_H = 172;
 const GAP = 32;
 
 const FONT =
@@ -188,7 +193,9 @@ function paint(ctx: Ctx, o: ShareOrder, cardH: number): number {
   ctx.fillStyle = "#ffffff";
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
-  ctx.fillText(`🥥  ORDER SUMMARY #${o.number}`, x, M + HEADER_H / 2 + 2);
+  ctx.fillText(`🥥  ORDER SUMMARY #${o.number}`, x, M + 112);
+  ctx.font = font(32, 600);
+  ctx.fillText(AGENCY, x, M + 48);
 
   let y = M + HEADER_H + 36;
 
@@ -266,7 +273,7 @@ function paint(ctx: Ctx, o: ShareOrder, cardH: number): number {
   ctx.fillStyle = MUTED;
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
-  ctx.fillText("JEET AGENCY, Salem", cardX + cardW / 2, y + 22);
+  ctx.fillText(SIGN_OFF, cardX + cardW / 2, y + 22);
   y += 22 + 34 + 26;
 
   ctx.restore();
