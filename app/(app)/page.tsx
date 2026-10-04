@@ -8,6 +8,7 @@ import {
   monthOptions,
 } from "@/lib/dates";
 import StatusSelect from "@/components/StatusSelect";
+import OrderShare from "@/components/OrderShare";
 import { fmtRate } from "@/lib/qty";
 import { STATUSES } from "@/lib/statuses";
 
@@ -289,8 +290,29 @@ export default async function OrdersPage({
                   </p>
                 )}
 
-                <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
-                  <span className="text-xs text-slate-400">Status</span>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3">
+                  <OrderShare
+                    order={{
+                      number: o.order_number,
+                      monthKey: o.month_key,
+                      date: formatDateTimeIST(o.order_date),
+                      status: o.status,
+                      seller: o.seller,
+                      sellerPhone: o.seller_phone,
+                      buyer: o.buyer,
+                      buyerPhone: o.buyer_phone,
+                      rate: o.rate,
+                      quantity: o.quantity,
+                      details: o.details,
+                      loadingDate: o.loading_date
+                        ? formatDate(o.loading_date)
+                        : null,
+                      actualLoadingDate: o.actual_loading_date
+                        ? formatDate(o.actual_loading_date)
+                        : null,
+                      remarks: o.remarks,
+                    }}
+                  />
                   <StatusSelect id={o.id} status={o.status} />
                 </div>
               </li>
