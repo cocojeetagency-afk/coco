@@ -15,6 +15,7 @@ export type Order = {
   actual_loading_date: string | Date | null;
   rate: string;
   quantity: string | null;
+  details: string | null;
   status: string;
   remarks: string | null;
   created_at: string;

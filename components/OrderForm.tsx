@@ -21,6 +21,7 @@ export type OrderFormValues = {
   actual_loading_date: string;
   rate: string;
   quantity: string;
+  details: string;
   status: string;
   remarks: string;
 };
@@ -194,6 +195,20 @@ export default function OrderForm({
       </div>
 
       <div>
+        <label htmlFor="details" className={label}>
+          Order Details
+        </label>
+        <textarea
+          id="details"
+          name="details"
+          rows={2}
+          defaultValue={initial.details}
+          placeholder="e.g. 60 bharti, 50 bharti 5 patta"
+          className={input}
+        />
+      </div>
+
+      <div>
         <label htmlFor="status" className={label}>
           Status <span className="text-red-600">*</span>
         </label>
@@ -207,7 +222,9 @@ export default function OrderForm({
             // Marking an order Loaded stamps today's date automatically
             if (v === "Loaded" && !actualLoading) setActualLoading(todayIST());
           }}
-          className={`${input} font-semibold ${STATUS_STYLES[status] ?? ""}`}
+          className={`${input.replace("bg-white ", "").replace("border-slate-300 ", "")} font-semibold ${
+            STATUS_STYLES[status] ?? "bg-white border-slate-300"
+          }`}
         >
           {STATUSES.map((s) => (
             <option key={s} value={s}>

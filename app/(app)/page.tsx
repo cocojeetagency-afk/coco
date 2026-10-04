@@ -44,7 +44,7 @@ export default async function OrdersPage({
     ? sql`SELECT * FROM orders WHERE month_key = ${month}
           AND (seller ILIKE ${"%" + q + "%"} OR buyer ILIKE ${"%" + q + "%"}
                OR seller_phone ILIKE ${"%" + q + "%"} OR buyer_phone ILIKE ${"%" + q + "%"}
-               OR remarks ILIKE ${"%" + q + "%"})
+               OR details ILIKE ${"%" + q + "%"} OR remarks ILIKE ${"%" + q + "%"})
           ORDER BY order_number DESC`
     : sql`SELECT * FROM orders WHERE month_key = ${month} ORDER BY order_number DESC`)) as Order[];
 
@@ -148,7 +148,7 @@ export default async function OrdersPage({
           <input
             name="q"
             defaultValue={q}
-            placeholder="Search seller, buyer, phone or remarks..."
+            placeholder="Search seller, buyer, phone, details..."
             className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base outline-none focus:border-green-600"
           />
           <button
@@ -271,6 +271,17 @@ export default async function OrdersPage({
                     </p>
                   </div>
                 </div>
+
+                {o.details && (
+                  <div className="mt-2 text-sm">
+                    <p className="text-[11px] uppercase tracking-wide text-slate-400">
+                      Order Details
+                    </p>
+                    <p className="whitespace-pre-line font-medium text-slate-800">
+                      {o.details}
+                    </p>
+                  </div>
+                )}
 
                 {o.remarks && (
                   <p className="mt-2 rounded-lg bg-slate-50 px-3 py-1.5 text-sm text-slate-600">

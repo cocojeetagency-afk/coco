@@ -47,6 +47,9 @@ await sql`CREATE INDEX IF NOT EXISTS idx_orders_loading ON orders (loading_date)
 await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS seller_phone TEXT`;
 await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS buyer_phone TEXT`;
 
+// Free-text order details (what was ordered), shown below Rate / Quantity
+await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS details TEXT`;
+
 // Confirmation Date was dropped from the app
 await sql`ALTER TABLE orders DROP COLUMN IF EXISTS confirmation_date`;
 

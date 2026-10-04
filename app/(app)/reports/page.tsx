@@ -15,6 +15,7 @@ const included = [
   "Actual Loading Date",
   "Rate",
   "Quantity",
+  "Order Details",
   "Status",
   "Remarks",
 ];

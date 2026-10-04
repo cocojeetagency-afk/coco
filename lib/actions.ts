@@ -162,6 +162,7 @@ function parseOrderForm(formData: FormData) {
   const rate = String(formData.get("rate") ?? "").trim();
   const status = String(formData.get("status") ?? "Pending");
   const quantityRaw = String(formData.get("quantity") ?? "").trim();
+  const details = String(formData.get("details") ?? "").trim();
   const remarks = String(formData.get("remarks") ?? "").trim();
   const opt = (name: string) => {
     const v = String(formData.get(name) ?? "").trim();
@@ -191,6 +192,7 @@ function parseOrderForm(formData: FormData) {
     buyerPhone,
     rate,
     quantity: quantityRaw === "" ? null : quantityRaw,
+    details: details === "" ? null : details,
     status,
     remarks: remarks === "" ? null : remarks,
   };
@@ -213,12 +215,13 @@ export async function createOrder(
         await sql`
           INSERT INTO orders
             (order_number, month_key, order_date, loading_date, seller, seller_phone,
-             buyer, buyer_phone, actual_loading_date, rate, quantity, status, remarks)
+             buyer, buyer_phone, actual_loading_date, rate, quantity, details, status, remarks)
           VALUES (
             (SELECT COALESCE(MAX(order_number), 0) + 1 FROM orders WHERE month_key = ${o.monthKey}),
             ${o.monthKey}, ${o.orderDate.toISOString()}, ${o.loadingDate},
             ${o.seller}, ${o.sellerPhone}, ${o.buyer}, ${o.buyerPhone},
-            ${o.actualLoadingDate}, ${o.rate}, ${o.quantity}, ${o.status}, ${o.remarks}
+            ${o.actualLoadingDate}, ${o.rate}, ${o.quantity}, ${o.details}, ${o.status},
+            ${o.remarks}
           )`;
         break;
       } catch (e) {
@@ -256,7 +259,7 @@ export async function updateOrder(
               seller = ${o.seller}, seller_phone = ${o.sellerPhone},
               buyer = ${o.buyer}, buyer_phone = ${o.buyerPhone},
               actual_loading_date = ${o.actualLoadingDate},
-              rate = ${o.rate}, quantity = ${o.quantity},
+              rate = ${o.rate}, quantity = ${o.quantity}, details = ${o.details},
               status = ${o.status}, remarks = ${o.remarks}, updated_at = now()
             WHERE id = ${id}`;
         } else {
@@ -269,7 +272,7 @@ export async function updateOrder(
               seller = ${o.seller}, seller_phone = ${o.sellerPhone},
               buyer = ${o.buyer}, buyer_phone = ${o.buyerPhone},
               actual_loading_date = ${o.actualLoadingDate},
-              rate = ${o.rate}, quantity = ${o.quantity},
+              rate = ${o.rate}, quantity = ${o.quantity}, details = ${o.details},
               status = ${o.status}, remarks = ${o.remarks}, updated_at = now()
             WHERE id = ${id}`;
         }

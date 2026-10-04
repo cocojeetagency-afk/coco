@@ -45,6 +45,7 @@ export default async function NewOrderPage() {
             actual_loading_date: "",
             rate: "",
             quantity: "",
+            details: "",
             status: "Pending",
             remarks: "",
           }}

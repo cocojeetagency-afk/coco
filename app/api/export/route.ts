@@ -44,6 +44,7 @@ export async function GET(req: NextRequest) {
     "Actual Loading Date",
     "Rate",
     "Quantity",
+    "Order Details",
     "Status",
     "Remarks",
   ];
@@ -62,6 +63,7 @@ export async function GET(req: NextRequest) {
         fmtDMY(o.actual_loading_date),
         o.rate,
         o.quantity,
+        o.details,
         o.status,
         o.remarks,
       ]

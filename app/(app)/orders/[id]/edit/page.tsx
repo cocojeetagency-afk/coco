@@ -64,6 +64,7 @@ export default async function EditOrderPage({
             actual_loading_date: d(o.actual_loading_date),
             rate: o.rate,
             quantity: o.quantity ?? "",
+            details: o.details ?? "",
             status: o.status,
             remarks: o.remarks ?? "",
           }}
