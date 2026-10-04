@@ -176,13 +176,16 @@ export default function PartyManager({ parties }: { parties: Party[] }) {
               className="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3"
             >
               <div className="min-w-0">
-                <p className="truncate font-semibold text-slate-800">{p.name}</p>
-                <p className="text-xs text-slate-500">
+                <p className="break-words font-semibold text-slate-800">{p.name}</p>
+                <p className="flex flex-wrap gap-x-1 text-xs text-slate-500">
                   {ROLE_LABEL[p.role] ?? p.role}
                   {p.phone ? (
                     <>
                       {" · "}
-                      <a href={`tel:${p.phone}`} className="text-green-700 underline">
+                      <a
+                        href={`tel:${p.phone}`}
+                        className="whitespace-nowrap text-green-700 underline"
+                      >
                         📞 {p.phone}
                       </a>
                     </>
@@ -195,7 +198,7 @@ export default function PartyManager({ parties }: { parties: Party[] }) {
                 <button
                   type="button"
                   onClick={() => show(p.id)}
-                  className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600"
+                  className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-600"
                 >
                   Edit
                 </button>
@@ -206,7 +209,7 @@ export default function PartyManager({ parties }: { parties: Party[] }) {
                     if (confirm(`Remove "${p.name}" from contacts?`))
                       startRemove(() => deleteParty(p.id));
                   }}
-                  className="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-semibold text-red-600 disabled:opacity-50"
+                  className="rounded-lg border border-red-300 px-2.5 py-1.5 text-xs font-semibold text-red-600 disabled:opacity-50"
                 >
                   Delete
                 </button>

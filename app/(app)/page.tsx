@@ -73,13 +73,13 @@ export default async function OrdersPage({
   return (
     <>
       <header className="sticky top-0 z-30 bg-green-700 px-4 py-4 text-white shadow-md">
-        <div className="mx-auto flex max-w-3xl items-center justify-between">
+        <div className="mx-auto flex max-w-3xl items-center justify-between lg:max-w-6xl">
           <h1 className="text-xl font-bold">Orders</h1>
           <span className="text-2xl">🥥</span>
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-3 py-4">
+      <main className="mx-auto max-w-3xl px-3 py-4 lg:max-w-6xl">
         {params.saved && (
           <p className="mb-3 rounded-lg bg-green-100 px-3 py-2 text-sm font-medium text-green-800">
             ✓ Order saved successfully
@@ -182,11 +182,11 @@ export default async function OrdersPage({
             </Link>
           </div>
         ) : (
-          <ul className="space-y-3">
+          <ul className="grid grid-cols-1 gap-3 lg:grid-cols-2">
             {orders.map((o) => (
               <li
                 key={o.id}
-                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                className="flex flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
@@ -208,7 +208,7 @@ export default async function OrdersPage({
                   </Link>
                 </div>
 
-                <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
+                <div className="mt-3 mb-3 grid grid-cols-2 gap-x-3 gap-y-2 text-sm [&>div]:min-w-0 [&_p]:break-words">
                   <div>
                     <p className="text-[11px] uppercase tracking-wide text-slate-400">
                       Seller
@@ -274,23 +274,23 @@ export default async function OrdersPage({
                 </div>
 
                 {o.details && (
-                  <div className="mt-2 text-sm">
+                  <div className="-mt-1 mb-3 text-sm">
                     <p className="text-[11px] uppercase tracking-wide text-slate-400">
                       Order Details
                     </p>
-                    <p className="whitespace-pre-line font-medium text-slate-800">
+                    <p className="break-words whitespace-pre-line font-medium text-slate-800">
                       {o.details}
                     </p>
                   </div>
                 )}
 
                 {o.remarks && (
-                  <p className="mt-2 rounded-lg bg-slate-50 px-3 py-1.5 text-sm text-slate-600">
+                  <p className="-mt-1 mb-3 break-words rounded-lg bg-slate-50 px-3 py-1.5 text-sm text-slate-600">
                     💬 {o.remarks}
                   </p>
                 )}
 
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3">
+                <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3">
                   <OrderShare
                     order={{
                       number: o.order_number,

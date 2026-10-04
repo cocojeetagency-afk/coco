@@ -16,3 +16,10 @@ input[type="datetime-local"],
 select {
   min-height: 2.75rem;
 }
+
+input,
+select,
+textarea {
+  min-width: 0;
+  max-width: 100%;
+}
