@@ -7,9 +7,12 @@ const label = "mb-1 block text-sm font-semibold text-slate-700";
 const input =
   "w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100";
 
+const contactsButton =
+  "flex shrink-0 items-center rounded-xl border border-green-700 bg-white px-3 text-sm font-semibold text-green-700 active:bg-green-50";
+
 // Contact Picker API — lets the user pick from the phone's own contact book.
-// Only some mobile browsers have it (Chrome on Android), so the button is
-// hidden everywhere else.
+// Only some mobile browsers have it (Chrome on Android); elsewhere the button
+// explains that the name and number have to be typed.
 type PickedContact = { name?: string[]; tel?: string[] };
 type ContactsManager = {
   select: (
@@ -42,6 +45,7 @@ export default function PartySelect({
   const [name, setName] = useState(defaultName);
   const [phone, setPhone] = useState(defaultPhone);
   const [open, setOpen] = useState(false);
+  const [pickError, setPickError] = useState(false);
   const canPickFromPhone = useSyncExternalStore(
     noopSubscribe,
     () => phoneContacts() !== null,
@@ -77,7 +81,12 @@ export default function PartySelect({
     setOpen(false);
   }
 
-  async function pickFromPhone() {
+  // "both" fills the name and the number; "phone" keeps the name already typed
+  async function pickFromPhone(fill: "both" | "phone") {
+    if (!canPickFromPhone) {
+      setPickError(true);
+      return;
+    }
     try {
       const picked = await phoneContacts()?.select(["name", "tel"], {
         multiple: false,
@@ -86,7 +95,7 @@ export default function PartySelect({
       if (!c) return;
       const pickedName = c.name?.[0]?.trim() ?? "";
       const pickedPhone = c.tel?.[0]?.replace(/[\s-]/g, "") ?? "";
-      if (pickedName) setName(pickedName);
+      if (pickedName && (fill === "both" || !name.trim())) setName(pickedName);
       if (pickedPhone) setPhone(pickedPhone);
       setOpen(false);
     } catch {
@@ -100,7 +109,7 @@ export default function PartySelect({
         {title} <span className="text-red-600">*</span>
       </label>
 
-      <div className="relative">
+      <div className="relative flex gap-2">
         <input
           id={`${field}-input`}
           name={field}
@@ -113,11 +122,19 @@ export default function PartySelect({
           onChange={(e) => type(e.target.value)}
           onFocus={() => setOpen(true)}
           onBlur={() => setOpen(false)}
-          placeholder={`🔍 Search or type ${field} name`}
+          placeholder={`🔍 Search or type ${field}`}
           required
           autoComplete="off"
           className={input}
         />
+        <button
+          type="button"
+          onClick={() => pickFromPhone("both")}
+          aria-label={`Pick ${field} name and number from phone contacts`}
+          className={contactsButton}
+        >
+          📱 Contacts
+        </button>
         {open && matches.length > 0 && (
           <ul
             id={`${field}-list`}
@@ -154,14 +171,11 @@ export default function PartySelect({
           New {field} — will be added to your contact list when you save.
         </p>
       )}
-      {canPickFromPhone && (
-        <button
-          type="button"
-          onClick={pickFromPhone}
-          className="mt-2 w-full rounded-lg border border-green-700 py-2 text-sm font-semibold text-green-700 active:bg-green-50"
-        >
-          📱 Pick from phone contacts
-        </button>
+      {pickError && (
+        <p className="mt-1 rounded-lg bg-amber-50 px-2 py-1.5 text-xs text-amber-800">
+          This browser can&apos;t open your phone contacts. It works in Chrome on
+          an Android phone. Please type the name and number instead.
+        </p>
       )}
 
       <label htmlFor={`${field}-phone`} className={`${label} mt-2`}>
@@ -178,13 +192,21 @@ export default function PartySelect({
           placeholder="e.g. 9944555679"
           className={input}
         />
+        <button
+          type="button"
+          onClick={() => pickFromPhone("phone")}
+          aria-label={`Pick ${field} phone number from phone contacts`}
+          className={contactsButton}
+        >
+          📱<span className="hidden sm:inline"> Contacts</span>
+        </button>
         {phone.trim() && (
           <a
             href={`tel:${phone.trim()}`}
             aria-label={`Call ${name || field}`}
             className="flex shrink-0 items-center rounded-xl border border-green-700 px-3 text-sm font-semibold text-green-700 active:bg-green-50"
           >
-            📞 Call
+            📞<span className="hidden sm:inline"> Call</span>
           </a>
         )}
       </div>
