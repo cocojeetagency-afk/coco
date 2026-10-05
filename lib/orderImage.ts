@@ -17,8 +17,8 @@ export type ShareOrder = {
 };
 
 // Shown at the top and bottom of the shared image and its text
-const AGENCY = "Bharath Agency, Salem.";
-const SIGN_OFF = "Thanks, Bharath.";
+const AGENCY = "BHARATH AGENCY, SALEM";
+const SIGN_OFF = "Thanks, BHARATH.";
 
 /** Rate is free text; plain numbers are shown as rupees. */
 function rateText(rate: string): string {
@@ -30,8 +30,9 @@ function rateText(rate: string): string {
 /** The order as plain text — sent along with the image as its caption. */
 export function orderSummaryText(o: ShareOrder): string {
   const lines = [
-    AGENCY,
-    `🥥 ORDER SUMMARY #${o.number}`,
+    `🥥 ${AGENCY}`,
+    "",
+    `ORDER SUMMARY #${o.number}`,
     `Date: ${o.date}`,
     `Status: ${o.status}`,
     "",
@@ -47,7 +48,8 @@ export function orderSummaryText(o: ShareOrder): string {
     o.actualLoadingDate ? `Actual Loading: ${o.actualLoadingDate}` : null,
     o.remarks ? `Remarks: ${o.remarks}` : null,
     "",
-    SIGN_OFF,
+    "Thanks,",
+    "BHARATH.",
   ];
   return lines.filter((l) => l !== null).join("\n");
 }

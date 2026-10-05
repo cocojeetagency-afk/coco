@@ -9,6 +9,8 @@ import {
 } from "@/lib/dates";
 import StatusSelect from "@/components/StatusSelect";
 import OrderShare from "@/components/OrderShare";
+import NameSearch from "@/components/NameSearch";
+import { getPartyLists } from "@/lib/parties";
 import { fmtRate } from "@/lib/qty";
 import { STATUSES } from "@/lib/statuses";
 
@@ -41,13 +43,17 @@ export default async function OrdersPage({
     ? params.status!
     : "All";
 
-  const monthOrders = (await (q
+  const [orderRows, parties] = await Promise.all([
+    q
     ? sql`SELECT * FROM orders WHERE month_key = ${month}
           AND (seller ILIKE ${"%" + q + "%"} OR buyer ILIKE ${"%" + q + "%"}
                OR seller_phone ILIKE ${"%" + q + "%"} OR buyer_phone ILIKE ${"%" + q + "%"}
                OR details ILIKE ${"%" + q + "%"} OR remarks ILIKE ${"%" + q + "%"})
           ORDER BY order_number DESC`
-    : sql`SELECT * FROM orders WHERE month_key = ${month} ORDER BY order_number DESC`)) as Order[];
+    : sql`SELECT * FROM orders WHERE month_key = ${month} ORDER BY order_number DESC`,
+    getPartyLists(),
+  ]);
+  const monthOrders = orderRows as Order[];
 
   const counts: Record<string, number> = {
     All: monthOrders.length,
@@ -146,11 +152,14 @@ export default async function OrdersPage({
           {status !== "All" && (
             <input type="hidden" name="status" value={status} />
           )}
-          <input
+          <NameSearch
+            key={q}
             name="q"
             defaultValue={q}
+            options={parties.all}
             placeholder="Search seller, buyer, phone, details..."
-            className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base outline-none focus:border-green-600"
+            className="flex-1"
+            inputClassName="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base outline-none focus:border-green-600"
           />
           <button
             type="submit"

@@ -1,6 +1,8 @@
 import { sql } from "@/lib/db";
 import { monthKeyIST, monthLabel, monthOptions, todayIST } from "@/lib/dates";
 import { sumQty } from "@/lib/qty";
+import { getPartyLists } from "@/lib/parties";
+import NameSearch from "@/components/NameSearch";
 
 export const dynamic = "force-dynamic";
 
@@ -65,6 +67,7 @@ export default async function ReportsPage({
     .sort()
     .reverse();
 
+  const parties = await getPartyLists();
   const rows = (await (yearly
     ? sql`SELECT seller, buyer, quantity FROM orders
           WHERE month_key LIKE ${period + "-%"} AND status <> 'Cancelled'`
@@ -193,13 +196,15 @@ export default async function ReportsPage({
                 >
                   Name
                 </label>
-                <input
+                <NameSearch
+                  key={party}
                   id="party"
                   name="party"
-                  type="search"
                   defaultValue={party}
+                  options={parties.all}
                   placeholder="All names"
-                  className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-base outline-none focus:border-green-600"
+                  wide
+                  inputClassName="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-base outline-none focus:border-green-600"
                 />
               </div>
             </div>
